@@ -48,7 +48,7 @@ namespace yadisk
     }
 
 	auto Client::download(url::path path, std::list<std::string> fields) -> json {
-
+	
 		CURL * curl = curl_easy_init();
 		if (!curl) return json();
 
@@ -74,8 +74,9 @@ namespace yadisk
 		curl_slist_free_all(header_list);
 		curl_easy_cleanup(curl);
 
-		if (response_code != CURLE_OK) return json();
-
+		if (response_code != CURLE_OK) 
+			return json();
+		
 		auto response_data = json::parse(response);
 		return response_data;
 	}
