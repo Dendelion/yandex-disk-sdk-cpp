@@ -47,6 +47,39 @@ namespace yadisk
         return http_response_code == 200;
     }
 
+	auto Client::download(url::path path, std::list<std::string> fields) -> json {
+
+		CURL * curl = curl_easy_init();
+		if (!curl) return json();
+
+		url::params_t url_params;
+		url_params["path"] = quote(path.string(), curl);
+		url_params["fields"] = boost::algorithm::join(fields, ",");
+		std::string url = api_url + "/resources/download" + "?" + url_params.string();
+
+		struct curl_slist *header_list = nullptr;
+		std::string auth_header = "Authorization: OAuth " + token;
+		header_list = curl_slist_append(header_list, auth_header.c_str());
+
+		stringstream response;
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl, CURLOPT_READDATA, &response);
+		curl_easy_setopt(curl, CURLOPT_READFUNCTION, write<stringstream>);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
+
+		auto response_code = curl_easy_perform(curl);
+
+		curl_slist_free_all(header_list);
+		curl_easy_cleanup(curl);
+
+		if (response_code != CURLE_OK) return json();
+
+		auto response_data = json::parse(response);
+		return response_data;
+	}
+	
 	auto Client::copy(url::path from, url::path to, bool overwrite, std::list<std::string> fields) -> json {
 
 		CURL * curl = curl_easy_init();
