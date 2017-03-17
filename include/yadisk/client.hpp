@@ -31,7 +31,15 @@ namespace yadisk
 
         auto upload(url::path to, string url, std::list<string> fields = std::list<string>()) -> json;
 
-        auto download(url::path from, url::path to, std::list<string> fields = std::list<string>()) -> json;
+        ///
+        /// Download file from YandexDisk
+        /// \param[in] from
+        /// \param[in] to
+        /// \param[in] fields
+        /// \return https://tech.yandex.ru/disk/api/reference/response-objects-docpage/#link
+        /// \include example/download.cpp
+        ///
+        auto download(url::path from, std::string to, std::list<string> fields = std::list<string>()) -> json;
 
         auto copy(url::path from, url::path to, bool overwrite, std::list<string> fields = std::list<string>()) -> json;
 
