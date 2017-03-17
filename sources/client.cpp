@@ -48,13 +48,13 @@ namespace yadisk
 		return http_response_code == 200;
  	}
 
-	auto Client::download(url::path path, std::list<std::string> fields) -> json {
+	auto Client::download(url::path from, std::string to, std::list<std::string> fields) -> json {
 	
 		CURL * curl = curl_easy_init();
 		if (!curl) return json();
 
 		url::params_t url_params;
-		url_params["path"] = quote(path.string(), curl);
+		url_params["path"] = quote(from.string(), curl);
 		url_params["fields"] = boost::algorithm::join(fields, ",");
 		std::string url = api_url + "/resources/download" + "?" + url_params.string();
 
