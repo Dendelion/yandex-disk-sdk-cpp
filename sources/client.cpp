@@ -47,38 +47,82 @@ namespace yadisk
 
 		return http_response_code == 200;
  	}
-
-	auto Client::download(url::path from, std::string to, std::list<std::string> fields) -> json {
 	
+	static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream){
+		curl_off_t nread;
+		size_t retcode = fread(ptr, size, nmemb, stream);
+		nread = (curl_off_t)retcode;
+		return retcode;
+	}
+	size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream){
+		size_t written;
+		written = fwrite(ptr, size, nmemb, stream);
+		return written;
+	}
+	auto Client::download(url::path from, std::string to, std::list<std::string> fields) -> json {
+		// init http request
 		CURL * curl = curl_easy_init();
-		if (!curl) return json();
+		if (!curl)
+				return json();
 
+		// fill http url
 		url::params_t url_params;
 		url_params["path"] = quote(from.string(), curl);
 		url_params["fields"] = boost::algorithm::join(fields, ",");
 		std::string url = api_url + "/resources/download" + "?" + url_params.string();
 
+		// fill http headers
 		struct curl_slist *header_list = nullptr;
 		std::string auth_header = "Authorization: OAuth " + token;
 		header_list = curl_slist_append(header_list, auth_header.c_str());
 
+		// build http request
 		stringstream response;
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 		curl_easy_setopt(curl, CURLOPT_READDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_READFUNCTION, write<stringstream>);
+		curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
 
+		// perform http request
 		auto response_code = curl_easy_perform(curl);
 
+		// clean resources
 		curl_slist_free_all(header_list);
 		curl_easy_cleanup(curl);
 
-		if (response_code != CURLE_OK) 
+		// check response code
+		if (response_code != CURLE_OK)
+				return json();
+
+		// parce response
+		auto response_data = json::parse(response);       	
+
+		// init http request for download
+		curl = curl_easy_init();
+		if (!curl)
+				return json();
+
+		// download file from responce "href"
+		char *downloadUrl = response_data["href"].c_str();
+		FILE *fp = fopen(to.c_str(),"w");
+		curl_easy_setopt(curl, CURLOPT_URL, downloadUrl);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+		curl_easy_setopt (curl, CURLOPT_VERBOSE, 1L);
+
+			// perform http request
+		response_code = curl_easy_perform(curl);
+
+			// clean resources
+		curl_easy_cleanup(curl);
+		fclose(fp);
+
+			// check response code
+		if (response_code != CURLE_OK)
 			return json();
-		
-		auto response_data = json::parse(response);
+
 		return response_data;
 	}
 	
