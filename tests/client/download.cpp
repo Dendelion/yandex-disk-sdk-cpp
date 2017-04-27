@@ -10,7 +10,7 @@ TEST_CASE("download valid file with valid token", "[client][download][file][plac
 
 	std::string token = "AQAAAAATPnx3AAQXOJS1w4zmPUdrsJNR1FATxEM";
 	path from{ "/yandexTest/1/test.docx" };
-  string to = "../test/";
+  	string to = "../test/";
 	ydclient client{ token };
 	auto info = client.download(from,to);
 	REQUIRE(not info.empty());
@@ -22,7 +22,7 @@ TEST_CASE("download with invalid token", "[client][download][file][place]") {
 
 	std::string token = "invalid-token";
 	path from{ "/yandexTest/1/test.docx" };
-  string to = "../test/";
+  	string to = "../test/";
 	ydclient client{ token };
 	auto info = client.download(from,to);
 	REQUIRE(not info.empty());
@@ -34,7 +34,7 @@ TEST_CASE("download invalid file with valid token", "[client][download][file][pl
 
 	std::string token = "AQAAAAATPnx3AAQXOJS1w4zmPUdrsJNR1FATxEM";
 	path from{ "/yandexTest/1/INVALIDtest.docx" };
-  string to = "../test/";
+  	string to = "../test/";
 	ydclient client{ token };
 	auto info = client.download(from,to);
 	REQUIRE(not info.empty());
